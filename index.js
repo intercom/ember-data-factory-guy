@@ -55,9 +55,7 @@ module.exports = {
   includeFactoryGuyFiles: function() {
     var includeFiles = false;
 
-    // development always needs the files, since the test runner can be
-    // run in development with /tests url
-    if (this.app.env.match(/test|development/)) {
+    if (this.app.env.match(/test/)) {
       includeFiles = true;
     } else {
       includeFiles = this.factoryGuyEnabled;
