@@ -528,7 +528,7 @@ SharedBehavior.mockFindAllSideloadingTests = function(serializer, serializerType
   //      let json = buildList('profile', 'with_company');
   //      mockFindAll('profile').withParams({include: 'company'}).returns({ json });
   //
-  //      FactoryGuy.store.findAll('profile', {inlcude: 'company'}).then(function(profiles) {
+  //      FactoryGuy.store.findAll('profile', {include: 'company'}).then(function(profiles) {
   //        ok(profiles.get('firstObject.company.name') === 'Silly corp');
   //        done();
   //      });
@@ -770,7 +770,7 @@ SharedBehavior.mockQueryTests = function() {
     });
   });
 
-  test("reusing mock query using returns with differnet models and different params returns different results", function(assert) {
+  test("reusing mock query using returns with different models and different params returns different results", function(assert) {
     Ember.run(()=> {
       let done = assert.async();
 
@@ -824,7 +824,7 @@ SharedBehavior.mockQueryTests = function() {
     });
   });
 
-  test("reusing mock query using returns with differnt models and withParams with different params returns different results", function(assert) {
+  test("reusing mock query using returns with different models and withParams with different params returns different results", function(assert) {
     Ember.run(()=> {
       let done = assert.async();
 
@@ -966,7 +966,7 @@ SharedBehavior.mockQueryRecordTests = function() {
     });
   });
 
-  test("twice using returns with differnet json and different params returns different results", function(assert) {
+  test("twice using returns with different json and different params returns different results", function(assert) {
     Ember.run(()=> {
       let done = assert.async();
 
@@ -987,7 +987,7 @@ SharedBehavior.mockQueryRecordTests = function() {
     });
   });
 
-  test("reusing mock using returns with differnt json and withParams with different params returns different results", function(assert) {
+  test("reusing mock using returns with different json and withParams with different params returns different results", function(assert) {
     Ember.run(()=> {
       let done = assert.async();
 
@@ -1093,6 +1093,44 @@ SharedBehavior.mockCreateTests = function() {
         deepEqual(ids, ['1', '2', '3']);
         deepEqual(descriptions, ['whatever', 'whatever', 'whatever']);
 
+        done();
+      });
+    });
+  });
+
+  test("match can take a function - if it returns true it registers a match", function(assert) {
+    assert.expect(2);
+    Ember.run(() => {
+      let done = assert.async();
+
+      let mock = mockCreate('profile');
+
+      mock.match(function(/*requestData*/) {
+        ok(true, 'matching function is called');
+        return true;
+      });
+
+      FactoryGuy.store.createRecord('profile').save().then(function(/*profile*/) {
+        equal(mock.timesCalled, 1);
+        done();
+      });
+    });
+  });
+
+  test("match can take a function - if it returns false it does not register a match", function(assert) {
+    assert.expect(2);
+    Ember.run(() => {
+      let done = assert.async();
+
+      let mock = mockCreate('profile');
+
+      mock.match(function(/*requestData*/) {
+        ok(true, 'matching function is called');
+        return false;
+      });
+
+      FactoryGuy.store.createRecord('profile').save().catch(() => {
+        equal(mock.timesCalled, 0);
         done();
       });
     });
@@ -1570,6 +1608,47 @@ SharedBehavior.mockUpdateTests = function() {
     });
   });
 
+  test("match can take a function - if it returns true it registers a match", function(assert) {
+    assert.expect(2);
+    Ember.run(() => {
+      let done = assert.async();
+      let customDescription = "special description";
+      let profile = make('profile');
+
+      let updateMock = mockUpdate(profile);
+
+      updateMock.match(function(/*requestData*/) {
+        ok(true, 'matching function is called');
+        return true;
+      });
+      profile.set('description', customDescription);
+      profile.save().then(function(/*profile*/) {
+        equal(updateMock.timesCalled, 1);
+        done();
+      });
+    });
+  });
+
+  test("match can take a function - if it returns false it does not register a match", function(assert) {
+    assert.expect(2);
+    Ember.run(() => {
+      let done = assert.async();
+      let customDescription = "special description";
+      let profile = make('profile');
+
+      let updateMock = mockUpdate(profile);
+
+      updateMock.match(function(/*requestData*/) {
+        ok(true, 'matching function is called');
+        return false;
+      });
+      profile.set('description', customDescription);
+      profile.save().catch(() => {
+        equal(updateMock.timesCalled, 0);
+        done();
+      });
+    });
+  });
   test("match some attributes", function(assert) {
     Ember.run(()=> {
       let done = assert.async();

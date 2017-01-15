@@ -8,20 +8,6 @@ var Funnel = require('broccoli-funnel');
 module.exports = {
   name: 'ember-data-factory-guy',
 
-  treeForVendor: function() {
-    var files = [];
-
-    var urijsPath = path.dirname(require.resolve('urijs'));
-    files.push(new Funnel(urijsPath, {
-      files: [
-        'URI.js'
-      ],
-      destDir: 'urijs'
-    }));
-
-    return mergeTrees(files);
-  },
-
   treeForApp: function(appTree) {
     var trees = [appTree];
 
@@ -48,7 +34,6 @@ module.exports = {
 
     if (this.includeFactoryGuyFiles()) {
       app.import(path.join(app.bowerDirectory, 'jquery-mockjax', 'dist', 'jquery.mockjax.js'));
-      app.import(path.join('vendor', 'urijs', 'URI.js'));
     }
   },
 
@@ -65,10 +50,12 @@ module.exports = {
   },
 
   treeFor: function(name) {
-    if (!this.includeFactoryGuyFiles()) {
+    // Not sure why this is necessary, but this stops the factory guy files
+    // from being added to app tree. Would have thought that this would have
+    // happened in treeForApp above, but not the case
+    if (!this.includeFactoryGuyFiles() && name === 'app') {
       return;
     }
-
     return this._super.treeFor.apply(this, arguments);
   }
 };

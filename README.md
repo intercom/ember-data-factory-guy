@@ -17,7 +17,9 @@ Factories simplify the process of testing, making you more efficient and your te
 
 **Why is FactoryGuy so awesome**
 - Since you using ember data, you don't need to create any ORM like things.
-- You don't need to add any files to re create all the relationships in your models and serializers
+- You don't need to add any files to re create all the relationships in your models
+- Any custom methods like: serialize / serializeAttribute in a serializer will be used automatically
+- If you set up custom methods like: buildURL / urlForFindRecord in an adapter, they will be used automatically
 - You don't have to setup anything besides making factories.
 - Everything just works.
 
@@ -1514,12 +1516,14 @@ Usage:
 ##### mockCreate
 
   - Use chainable methods to build the response
-    - match
-      - Attributes that must be in request json
+    - match: takes a hash with attributes or a matching function
+      1. attributes that must be in request json
         - These will be added to the response json automatically, so
           you don't need to include them in the returns hash.
         - If you match on a belongsTo association, you don't have to include that in
-          the returns hash either ( same idea ).
+          the returns hash either ( same idea )
+      1. a function that can be used to perform an arbitrary match against the request
+          json, returning `true` if there is a match, `false` otherwise.
     - returns
       - Attributes ( including relationships ) to include in response json
   - Need to wrap tests using mockCreate with: Ember.run(function() { 'your test' })
@@ -1558,6 +1562,9 @@ Usage:
   // Match all attributes
   mockCreate('project').match({name: "Moo", user: user});
 
+  // Match using a function that checks that the request's top level attribute "name" equals 'Moo'
+  mockCreate('project').match(requestData => requestData.name === 'Moo');
+
   // Exactly matching attributes, and returning extra attributes
   mockCreate('project')
     .match({name: "Moo", user: user})
@@ -1594,8 +1601,10 @@ Usage:
   - mockUpdate(modelType, id)
     - Two arguments: modelType ( like 'profile' ) , and the profile id that will updated
   - Use chainable methods to help build response:
-    - match
-      - Attributes with values that must be present on the model you are updating
+    - match: takes a hash with attributes or a matching function
+      1. attributes with values that must be present on the model you are updating
+      1. a function that can be used to perform an arbitrary match against the request
+        json, returning `true` if there is a match, `false` otherwise.
     - returns
       - Attributes ( including relationships ) to include in response json
   - Need to wrap tests using mockUpdate with: Ember.run(function() { 'your test' })
@@ -1637,6 +1646,12 @@ Usage:
   let mock = mockUpdate(profile).match({name: "moo"});
   profile.save();  // will not be mocked since the mock you set says the name must be "woo"
 
+  // using match() method to specify a matching function
+  let profile = make('profile');
+  profile.set('name', "woo");
+  let mock = mockUpdate(profile).match(requestData => requestData.name === "moo");
+  profile.save();  // will not be mocked since the mock you set requires the request's top level attribute "name" to equal "moo"
+
   // either set the name to "moo" which will now be mocked correctly
   profile.set('name', "moo");
   profile.save(); // succeeds
@@ -1663,7 +1678,7 @@ Usage:
   profile.save() //=> will fail
 ````
 
-*mocking a failed update and retry with succees*
+*mocking a failed update and retry with success*
 
 ```javascript
   let profile = make('profile');
@@ -1689,7 +1704,7 @@ Usage:
 
 ##### mockDelete
   - Need to wrap tests using mockDelete with: Ember.run(function() { 'your test' })
-  - To handle deleteing a model
+  - To handle deleting a model
     - Pass in a record ( or a typeName and id )
 
 Usage:
@@ -1739,8 +1754,8 @@ Usage:
 ##### Tips and Tricks
 
 ###### Tip 1: Fun with makeList/buildList and traits
-  - This is probably the funnest thing in FactoryGuy, if your not using this
-  syntax yet, you are truely missing out.
+  - This is probably the funnest thing in FactoryGuy, if you're not using this
+  syntax yet, you are truly missing out.
   
   ```javascript
    
@@ -1765,7 +1780,7 @@ Usage:
   // app/serializers/person.js
   export default DS.RESTSerializer.extend({
 
-    // let's say your modifying all names to be Japanese honorific style
+    // let's say you're modifying all names to be Japanese honorific style
     serialize: function(snapshot, options) {
       var json = this._super(snapshot, options);
   
@@ -1849,13 +1864,14 @@ import {Scenario}  from 'ember-data-factory-guy';
 
 export default class extends Scenario {
 
-  run(opts={}) {
-    this.permissionGroups = this.makeList('permission-group',
-      ['default', { company }],
-      ['basic', { company }],
-      ['empty', { company }]);
+  run() {
+    this.createGroups();
   }
-
+  
+  createGroups() {
+    this.permissionGroups = this.makeList('permission-group', 3);
+  }
+  
   groupNames() {
     return this.permissionGroups.mapBy('name').sort();
   }
@@ -1871,10 +1887,6 @@ describe('Admin View', function() {
   beforeEach(function() {
     scenario = new Scenario();
     scenario.run();
-  });
-
-  afterEach(()=> {
-    mocaAfter(application);
   });
 
   describe('group', function() {
