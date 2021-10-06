@@ -3,7 +3,10 @@ import FactoryGuy, { manualSetup } from 'ember-data-factory-guy';
 import DS from 'ember-data';
 import DRFAdapter from 'ember-django-adapter/adapters/drf';
 import DRFSerializer from 'ember-django-adapter/serializers/drf';
-import ActiveModelAdapter from 'active-model-adapter';
+import RESTAdapter from '@ember-data/adapter/rest';
+import ActiveModelAdapter, {
+  ActiveModelSerializer,
+} from 'active-model-adapter';
 import { param } from 'ember-data-factory-guy/utils/helper-functions';
 import { ActiveModelSerializer } from 'active-model-adapter';
 import AdapterFetch from 'ember-fetch/mixins/adapter-fetch';
@@ -117,7 +120,13 @@ export function containerSetup(application, serializerType) {
     let store = application.lookup('service:store');
 
     let adapterType = serializerType === '-json' ? '-rest' : serializerType;
-    let adapter = application.lookup('adapter:' + adapterType);
+    let adapter;
+    if (serializerType === '-json' || serializerType === '-rest') {
+      application.register(`adapter:-rest`, RESTAdapter, {
+        singleton: false,
+      });
+    }
+    adapter = application.lookup('adapter:' + adapterType);
     adapter = adapter.reopen(AdapterFetch);
 
     serializerType = serializerType === '-json' ? '-default' : serializerType;

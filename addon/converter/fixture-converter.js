@@ -190,14 +190,52 @@ export default class FixtureConverter {
         let attributeKey           = transformKeyFunction(attribute),
             transformValueFunction = this.getTransformValueFunction(meta.type);
 
-        if (fixture.hasOwnProperty(attribute)) {
-          attributes[attributeKey] = transformValueFunction(fixture[attribute], meta.options);
-        } else if (fixture.hasOwnProperty(attributeKey)) {
-          attributes[attributeKey] = transformValueFunction(fixture[attributeKey], meta.options);
+        let attributeValueInFixture = fixture[attributeKey];
+
+        // If passed Fragments or FragmentArrays we must transform them to their serialized form before we can push them into the Store
+        if (
+          attributeValueInFixture instanceof Fragment ||
+          attributeValueInFixture instanceof FragmentArray
+        ) {
+          fixture[attributeKey] = this.normalizeModelFragments(
+            attributeValueInFixture
+          );
+        }
+
+        if (Object.prototype.hasOwnProperty.call(fixture, attribute)) {
+          attributes[attributeKey] = transformValueFunction(
+            fixture[attribute],
+            meta.options
+          );
+        } else if (
+          Object.prototype.hasOwnProperty.call(fixture, attributeKey)
+        ) {
+          attributes[attributeKey] = transformValueFunction(
+            fixture[attributeKey],
+            meta.options
+          );
         }
       }
     });
     return attributes;
+  }
+
+  normalizeModelFragments(attributeValueInFixture) {
+    if (attributeValueInFixture instanceof Fragment) {
+      return this.store.normalize(
+        attributeValueInFixture.constructor.modelName,
+        attributeValueInFixture.serialize()
+      ).data.attributes;
+    }
+    if (attributeValueInFixture instanceof FragmentArray) {
+      return attributeValueInFixture
+        .serialize()
+        .map(
+          (item) =>
+            this.store.normalize(attributeValueInFixture.type, item).data
+              .attributes
+        );
+    }
   }
 
   /**

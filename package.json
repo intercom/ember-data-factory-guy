@@ -58,7 +58,7 @@
     "qunit-dom": "^0.7.1"
   },
   "resolutions": {
-    "ember-data": "3.9.0"
+    "ember-data": "3.24.2"
   },
   "keywords": [
     "ember-addon",
