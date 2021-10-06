@@ -117,7 +117,13 @@ export function containerSetup(application, serializerType) {
     let store = application.lookup('service:store');
 
     let adapterType = serializerType === '-json' ? '-rest' : serializerType;
-    let adapter = application.lookup('adapter:' + adapterType);
+    let adapter;
+    if (serializerType === '-json' || serializerType === '-rest') {
+      application.register(`adapter:-rest`, RESTAdapter, {
+        singleton: false,
+      });
+    }
+    adapter = application.lookup('adapter:' + adapterType);
     adapter = adapter.reopen(AdapterFetch);
 
     serializerType = serializerType === '-json' ? '-default' : serializerType;
