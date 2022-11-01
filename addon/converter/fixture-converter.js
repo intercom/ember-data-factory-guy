@@ -4,7 +4,6 @@ import { entries } from '../utils/helper-functions';
 import { typeOf } from '@ember/utils';
 import { getOwner } from '@ember/application';
 import { camelize } from '@ember/string';
-<<<<<<< HEAD
 import require from 'require';
 
 let Fragment;
@@ -19,10 +18,6 @@ try {
   Fragment = function Fragment() {};
   FragmentArray = function FragmentArray() {};
 }
-=======
-import Fragment from 'ember-data-model-fragments/fragment';
-import FragmentArray from 'ember-data-model-fragments/array/fragment';
->>>>>>> 24bc938 ([BREAKING] Fixes incompatibility with Ember Data Model Fragments 5.0.0-beta+ and Ember Data 3.13+ (#449))
 
 /**
  Base class for converting the base fixture that factory guy creates to
@@ -195,37 +190,10 @@ export default class FixtureConverter {
         let attributeKey           = transformKeyFunction(attribute),
             transformValueFunction = this.getTransformValueFunction(meta.type);
 
-<<<<<<< HEAD
         if (fixture.hasOwnProperty(attribute)) {
           attributes[attributeKey] = transformValueFunction(fixture[attribute], meta.options);
         } else if (fixture.hasOwnProperty(attributeKey)) {
           attributes[attributeKey] = transformValueFunction(fixture[attributeKey], meta.options);
-=======
-        let attributeValueInFixture = fixture[attributeKey];
-
-        // If passed Fragments or FragmentArrays we must transform them to their serialized form before we can push them into the Store
-        if (
-          attributeValueInFixture instanceof Fragment ||
-          attributeValueInFixture instanceof FragmentArray
-        ) {
-          fixture[attributeKey] = this.normalizeModelFragments(
-            attributeValueInFixture
-          );
-        }
-
-        if (Object.prototype.hasOwnProperty.call(fixture, attribute)) {
-          attributes[attributeKey] = transformValueFunction(
-            fixture[attribute],
-            meta.options
-          );
-        } else if (
-          Object.prototype.hasOwnProperty.call(fixture, attributeKey)
-        ) {
-          attributes[attributeKey] = transformValueFunction(
-            fixture[attributeKey],
-            meta.options
-          );
->>>>>>> 24bc938 ([BREAKING] Fixes incompatibility with Ember Data Model Fragments 5.0.0-beta+ and Ember Data 3.13+ (#449))
         }
       }
     });
