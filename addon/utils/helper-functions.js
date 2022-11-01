@@ -2,6 +2,7 @@
 import { typeOf } from '@ember/utils';
 import require from 'require';
 import { assign } from '@ember/polyfills';
+import { isEqual } from 'underscore';
 
 const plusRegex = new RegExp("\\+", "g");
 
@@ -217,3 +218,16 @@ export function requireFiles(filePattern) {
     )
     .map((moduleName) => require(moduleName, null, null, true));
 }
+
+// get diff between two objects
+export function difference(obj1, obj2) {
+  let allKeys = [...new Set([...Object.keys(obj1), ...Object.keys(obj2)])];
+  let difference = allKeys.reduce(function (result, key) {
+    if (!isEqual(obj1[key], obj2[key])) {
+      result[key] = { request: obj1[key], handler: obj2[key] };
+    }
+    return result;
+  }, {});
+  return difference;
+}
+

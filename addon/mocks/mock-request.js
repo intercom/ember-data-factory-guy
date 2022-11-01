@@ -5,7 +5,9 @@ import {
   isEquivalent,
   isPartOf,
   param,
-  toParams
+  toParams,
+  paramsFromRequestBody,
+  difference,
 } from '../utils/helper-functions';
 import FactoryGuy from '../factory-guy';
 import RequestManager from './request-manager';
@@ -117,6 +119,42 @@ export default class {
     }
   }
 
+  logNoMatch(request) {
+    if (FactoryGuy.logLevel > 0) {
+      const name = this.constructor.name.replace('Request', '');
+      const type = this.getType();
+      const url = this.getUrl();
+      let requestParams = request.queryParams;
+      let handlerParams;
+
+      if (/POST|PUT|PATCH/.test(this.type)) {
+        requestParams = paramsFromRequestBody(request.requestBody);
+      }
+      if (!isEmptyObject(this.queryParams)) {
+        handlerParams = this.queryParams;
+      } else if (!isEmptyObject(this.someQueryParams)) {
+        handlerParams = this.someQueryParams;
+      }
+
+      let requestParamsString = decodeURI([param(requestParams)].join(''));
+      let handlerParamsString = decodeURI([param(handlerParams)].join(''));
+
+      const diff = difference(requestParams, handlerParams);
+      let diff_string = '';
+      for (const [key, value] of Object.entries(diff)) {
+        if (value.request != undefined)
+          diff_string += `\n\x1b[31m - ${key}=${JSON.stringify(value.request)}`;
+        if (value.handler != undefined)
+          diff_string += `\n\x1b[32m + ${key}=${JSON.stringify(value.handler)}`;
+        diff_string += '\n';
+      }
+
+      console.log(
+        `[factory guy] ${name} ${type} ${url} \n expected: ${requestParamsString}  \n      got: ${handlerParamsString} \n${diff_string}`
+      );
+    }
+  }
+
   withParams(queryParams) {
     this.queryParams = queryParams;
     return this;
@@ -142,6 +180,9 @@ export default class {
   }
 
   extraRequestMatches(request) {
+    if (!this.paramsMatch(request)) {
+      this.logNoMatch(request);
+    }
     return this.paramsMatch(request);
   }
 
